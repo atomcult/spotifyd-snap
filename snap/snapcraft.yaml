@@ -1,0 +1,73 @@
+name: spotifyd
+base: core22
+version: '0.3.5'
+summary: Single-line elevator pitch for your amazing snap
+description: |
+  This is my-snap's description. You have a paragraph or two to tell the
+  most important story about your snap. Keep it under 100 words though,
+  we live in tweetspace and your description wants to look good in the snap
+  store.
+
+grade: stable
+confinement: strict
+
+layout:
+  /etc/spotifyd.conf:
+    symlink: $SNAP_COMMON/spotifyd.conf
+
+apps:
+  spotifyd:
+    command: bin/spotifyd.sh
+    plugs:
+      - alsa
+      - audio-playback
+      - network
+    environment:
+      LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio
+      PULSE_SERVER: "$XDG_RUNTIME_DIR/../pulse/native"
+  daemon:
+    command: bin/spotifyd
+    daemon: simple
+
+parts:
+  wrapper:
+    plugin: dump
+    source: ./src
+    organize:
+      '*': bin/
+  spotifyd:
+    plugin: rust
+    rust-features:
+      - pulseaudio_backend
+      - dbus_keyring
+      - dbus_mpris
+    source: https://github.com/Spotifyd/spotifyd.git
+    build-packages:
+      - libc6-dev
+      - libasound2-dev
+      - libssl-dev
+      - libpulse-dev
+      - libdbus-1-dev
+    override-stage: |
+      craftctl default
+      strip bin/spotifyd
+      mkdir -p etc
+      touch etc/spotifyd.conf
+    stage-packages:
+      - libflac8
+      - libx11-xcb1
+      - libx11-6
+      - libxau6
+      - libxdmcp6
+      - libasound2
+      - libasyncns0
+      - libogg0
+      - libopus0
+      - libpulse0
+      - libsndfile1
+      - libvorbis0a
+      - libvorbisenc2
+      - libxcb1
+    prime:
+      - -usr/share/doc
+      - -usr/share/man
